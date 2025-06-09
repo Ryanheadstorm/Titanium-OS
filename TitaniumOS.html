@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Titanium OS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    body, html {
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e') no-repeat center center fixed;
+      background-size: cover;
+    }
+    #loginScreen, #osInterface {
+      display: none;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #loginScreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .login-box {
+      background: white;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    #taskbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: #2b2b2b;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      color: white;
+    }
+    #startMenu {
+      position: fixed;
+      bottom: 40px;
+      left: 10px;
+      background: white;
+      width: 250px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: none;
+      flex-direction: column;
+    }
+    .app-icon {
+      margin: 0 10px;
+      cursor: pointer;
+    }
+    .app-window {
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 70%;
+      background: white;
+      border: 2px solid #000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+    }
+    .window-header {
+      background: #444;
+      color: white;
+      padding: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .close-btn {
+      cursor: pointer;
+      padding: 0 10px;
+      background: red;
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+    .window-content {
+      flex: 1;
+      padding: 10px;
+      overflow: auto;
+    }
+    input, button {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginScreen">
+    <div class="login-box">
+      <h2>Welcome to Titanium OS</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <br />
+      <button onclick="login()">Login</button>
+      <button onclick="showCreateAccountDialog()">Create Account</button>
+    </div>
+  </div>
+
+  <div id="osInterface">
+    <div id="taskbar">
+      <div class="app-icon" onclick="toggleStartMenu()">⬆</div>
+      <div class="app-icon" onclick="openApp('fileExplorer')">📁</div>
+      <div class="app-icon" onclick="openApp('webBrowser')">🌐</div>
+      <div class="app-icon" onclick="openApp('gameShop')">🎮</div>
+      <div class="app-icon" onclick="openApp('terminal')">💻</div>
+    </div>
+    <div id="startMenu">
+      <input type="text" placeholder="Search apps..." oninput="searchApps(this.value)" />
+      <div id="appList">
+        <div onclick="openApp('fileExplorer')">File Explorer</div>
+        <div onclick="openApp('webBrowser')">Web Browser</div>
+        <div onclick="openApp('gameShop')">Game Shop</div>
+        <div onclick="openApp('terminal')">Terminal</div>
+      </div>
+    </div>
+
+    <div id="fileExplorer" class="app-window">
+      <div class="window-header">File Explorer <button class="close-btn" onclick="closeApp('fileExplorer')">X</button></div>
+      <div class="window-content">No files yet!</div>
+    </div>
+
+    <div id="webBrowser" class="app-window">
+      <div class="window-header">Web Browser <button class="close-btn" onclick="closeApp('webBrowser')">X</button></div>
+      <div class="window-content">
+        <input type="text" id="browserSearch" placeholder="Search..." />
+        <button onclick="searchWeb()">Go</button>
+        <iframe id="browserFrame" style="width:100%; height:90%; border:none;"></iframe>
+      </div>
+    </div>
+
+    <div id="gameShop" class="app-window">
+      <div class="window-header">Game Shop <button class="close-btn" onclick="closeApp('gameShop')">X</button></div>
+      <div class="window-content">
+        <button onclick="openApp('guessGame')">Play Guess the Number</button>
+      </div>
+    </div>
+
+    <div id="guessGame" class="app-window">
+      <div class="window-header">Guess the Number <button class="close-btn" onclick="closeApp('guessGame')">X</button></div>
+      <div class="window-content">
+        <p>Guess a number between 1 and 100</p>
+        <input type="number" id="guessInput" />
+        <button onclick="checkGuess()">Guess</button>
+        <p id="guessFeedback"></p>
+      </div>
+    </div>
+
+    <div id="terminal" class="app-window">
+      <div class="window-header">Terminal <button class="close-btn" onclick="closeApp('terminal')">X</button></div>
+      <div class="window-content">
+        <textarea style="width:100%; height:100%;">Linux terminal simulation...
+>_</textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let accounts = {};
+    let numberToGuess = Math.floor(Math.random() * 100) + 1;
+
+    function login() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if (accounts[u] === p) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('osInterface').style.display = 'block';
+      } else {
+        alert("Invalid credentials.");
+      }
+    }
+
+    function showCreateAccountDialog() {
+      const u = prompt("Create a username:");
+      const p = prompt("Create a password:");
+      if (u && p) {
+        accounts[u] = p;
+        alert("Account created. You can now login with your credentials.");
+        document.getElementById('username').value = u;
+        document.getElementById('password').value = p;
+      } else {
+        alert("Both fields are required.");
+      }
+    }
+
+    function toggleStartMenu() {
+      const menu = document.getElementById('startMenu');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function openApp(id) {
+      document.getElementById(id).style.display = 'flex';
+      document.getElementById('startMenu').style.display = 'none';
+    }
+
+    function closeApp(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function searchApps(query) {
+      const apps = document.querySelectorAll('#appList div');
+      apps.forEach(app => {
+        app.style.display = app.innerText.toLowerCase().includes(query.toLowerCase()) ? 'block' : 'none';
+      });
+    }
+
+    function searchWeb() {
+      const q = document.getElementById('browserSearch').value;
+      document.getElementById('browserFrame').src = `https://www.bing.com/search?q=${encodeURIComponent(q)}`;
+    }
+
+    function checkGuess() {
+      const guess = parseInt(document.getElementById('guessInput').value);
+      const feedback = document.getElementById('guessFeedback');
+      if (guess > numberToGuess) feedback.innerText = 'Too high!';
+      else if (guess < numberToGuess) feedback.innerText = 'Too low!';
+      else feedback.innerText = 'Correct!';
+    }
+
+    document.getElementById('loginScreen').style.display = 'flex';
+  </script>
+</body>
+</html>

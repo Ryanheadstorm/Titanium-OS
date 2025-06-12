@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Titanium OS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    body, html {
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e') no-repeat center center fixed;
+      background-size: cover;
+    }
+    #loginScreen, #registerScreen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: white;
+    }
+    #registerScreen {
+      display: none;
+    }
+    .login-box, .register-box {
+      background: #222;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      min-width: 280px;
+    }
+    input {
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #2b2b2b;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #444;
+    }
+
+    /* OS Interface initially hidden */
+    #osInterface {
+      display: none;
+      height: 100%;
+      width: 100%;
+      position: relative;
+      color: white;
+    }
+
+    #taskbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: #2b2b2b;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      color: white;
+      z-index: 500;
+    }
+    #startMenu {
+      position: fixed;
+      bottom: 40px;
+      left: 10px;
+      background: white;
+      width: 250px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: none;
+      flex-direction: column;
+      color: black;
+      z-index: 600;
+    }
+    .app-icon {
+      margin: 0 10px;
+      cursor: pointer;
+      font-size: 24px; /* bigger icons as per your earlier request */
+      user-select: none;
+    }
+    .app-window {
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 70%;
+      background: white;
+      border: 2px solid #000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+      color: black;
+      z-index: 700;
+    }
+    .window-header {
+      background: #444;
+      color: white;
+      padding: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .close-btn {
+      cursor: pointer;
+      padding: 0 10px;
+      background: red;
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+    .window-content {
+      flex: 1;
+      padding: 10px;
+      overflow: auto;
+    }
+    textarea {
+      width: 100%;
+      height: 100%;
+      resize: none;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <h2>Welcome to Titanium OS</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="loginBtn">Login</button>
+      <button id="showCreateAccountBtn">Create Account</button>
+    </div>
+  </div>
+
+  <!-- REGISTER SCREEN -->
+  <div id="registerScreen">
+    <div class="register-box">
+      <h2>Create Account</h2>
+      <input type="text" id="newUsername" placeholder="New Username" />
+      <input type="password" id="newPassword" placeholder="New Password" />
+      <button id="createAccountBtn">Register</button>
+      <button id="backToLoginBtn">Back to Login</button>
+    </div>
+  </div>
+
+  <!-- OS Interface -->
+  <div id="osInterface">
+    <div id="taskbar">
+      <div class="app-icon" onclick="toggleStartMenu()">⬆</div>
+      <div class="app-icon" onclick="openApp('fileExplorer')">📁</div>
+      <div class="app-icon" onclick="openApp('webBrowser')">🌐</div>
+      <div class="app-icon" onclick="openApp('gameShop')">🎮</div>
+      <div class="app-icon" onclick="openApp('terminal')">💻</div>
+    </div>
+    <div id="startMenu">
+      <input type="text" placeholder="Search apps..." oninput="searchApps(this.value)" />
+      <div id="appList">
+        <div onclick="openApp('fileExplorer')">File Explorer</div>
+        <div onclick="openApp('webBrowser')">Web Browser</div>
+        <div onclick="openApp('gameShop')">Game Shop</div>
+        <div onclick="openApp('terminal')">Terminal</div>
+      </div>
+    </div>
+
+    <div id="fileExplorer" class="app-window">
+      <div class="window-header">File Explorer <button class="close-btn" onclick="closeApp('fileExplorer')">X</button></div>
+      <div class="window-content">No files yet!</div>
+    </div>
+
+    <div id="webBrowser" class="app-window">
+      <div class="window-header">Web Browser <button class="close-btn" onclick="closeApp('webBrowser')">X</button></div>
+      <div class="window-content">
+        <input type="text" id="browserSearch" placeholder="Search..." />
+        <button onclick="searchWeb()">Go</button>
+        <iframe id="browserFrame" style="width:100%; height:90%; border:none;"></iframe>
+      </div>
+    </div>
+
+    <div id="gameShop" class="app-window">
+      <div class="window-header">Game Shop <button class="close-btn" onclick="closeApp('gameShop')">X</button></div>
+      <div class="window-content">
+        <button onclick="openApp('guessGame')">Play Guess the Number</button>
+      </div>
+    </div>
+
+    <div id="guessGame" class="app-window">
+      <div class="window-header">Guess the Number <button class="close-btn" onclick="closeApp('guessGame')">X</button></div>
+      <div class="window-content">
+        <p>Guess a number between 1 and 100</p>
+        <input type="number" id="guessInput" />
+        <button onclick="checkGuess()">Guess</button>
+        <p id="guessFeedback"></p>
+      </div>
+    </div>
+
+    <div id="terminal" class="app-window">
+      <div class="window-header">Terminal <button class="close-btn" onclick="closeApp('terminal')">X</button></div>
+      <div class="window-content">
+        <textarea id="terminalArea">Linux terminal simulation...
+>_</textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let accounts = {};
+    let numberToGuess = Math.floor(Math.random() * 100) + 1;
+
+    // Elements
+    const loginScreen = document.getElementById('loginScreen');
+    const registerScreen = document.getElementById('registerScreen');
+    const osInterface = document.getElementById('osInterface');
+
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+
+    const newUsernameInput = document.getElementById('newUsername');
+    const newPasswordInput = document.getElementById('newPassword');
+
+    // Buttons
+    const loginBtn = document.getElementById('loginBtn');
+    const showCreateAccountBtn = document.getElementById('showCreateAccountBtn');
+    const createAccountBtn = document.getElementById('createAccountBtn');
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+
+    loginBtn.onclick = () => {
+      const u = usernameInput.value.trim();
+      const p = passwordInput.value.trim();
+      if(accounts[u] === p) {
+        // Successful login
+        loginScreen.style.display = 'none';
+        registerScreen.style.display = 'none';
+        osInterface.style.display = 'block';
+      } else {
+        alert("Invalid credentials.");
+      }
+    };
+
+    showCreateAccountBtn.onclick = () => {
+      loginScreen.style.display = 'none';
+      registerScreen.style.display = 'flex';
+    };
+
+    backToLoginBtn.onclick = () => {
+      registerScreen.style.display = 'none';
+      loginScreen.style.display = 'flex';
+    };
+
+    createAccountBtn.onclick = () => {
+      const u = newUsernameInput.value.trim();
+      const p = newPasswordInput.value.trim();
+      if(u && p) {
+        if(accounts[u]) {
+          alert("Username already exists.");
+          return;
+        }
+        accounts[u] = p;
+        alert("Account created. You can now login.");
+        // Clear inputs
+        newUsernameInput.value = "";
+        newPasswordInput.value = "";
+        registerScreen.style.display = 'none';
+        loginScreen.style.display = 'flex';
+        // Autofill username and password fields for convenience
+        usernameInput.value = u;
+        passwordInput.value = p;
+      } else {
+        alert("Both fields are required.");
+      }
+    };
+
+    // OS functions
+
+    function toggleStartMenu() {
+      const menu = document.getElementById('startMenu');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function openApp(id) {
+      document.getElementById(id).style.display = 'flex';
+      document.getElementById('startMenu').style.display = 'none';
+    }
+
+    function closeApp(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function searchApps(query) {
+      const apps = document.querySelectorAll('#appList div');
+      apps.forEach(app => {
+        app.style.display = app.innerText.toLowerCase().includes(query.toLowerCase()) ? 'block' : 'none';
+      });
+    }
+
+    function searchWeb() {
+      const q = document.getElementById('browserSearch').value;
+      document.getElementById('browserFrame').src = `https://www.bing.com/search?q=${encodeURIComponent(q)}`;
+    }
+
+    function checkGuess() {
+      const guess = parseInt(document.getElementById('guessInput').value);
+      const feedback = document.getElementById('guessFeedback');
+      if (guess > numberToGuess) feedback.innerText = 'Too high!';
+      else if (guess < numberToGuess) feedback.innerText = 'Too low!';
+      else feedback.innerText = 'Correct!';
+    }
+  </script>
+</body>
+</html>
